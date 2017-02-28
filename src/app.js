@@ -5,27 +5,31 @@ var App = (function() {
 
     // create web audio api context
     var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-    var gainNode = audioCtx.createGain();
-    gainNode.gain.value = 1;
-    gainNode.connect(audioCtx.destination);
+    var masterGainNode = audioCtx.createGain();
+    masterGainNode.gain.value = 1;
+    masterGainNode.connect(audioCtx.destination);
     var oscillators = [];
 
     var pressedKeys = [];
 
     var subscriptions = [{
             "Name": "playSound",
-            "Subscription": events.subscribe('playSound', function(frequency) {
-                addOscillator(frequency);
+            "Subscription": events.subscribe('playSound', function(obj) {
+                addOscillator(obj);
             })
         },
         {
             "Name": "stopSound",
             "Subscription": events.subscribe('stopSound', function(obj) {
                 var oscillator = oscillators.find(function(item) { return item.frequency.value === obj.frequency });
-                if (oscillator.length > 1) {
-                    for (var osc in oscillator) {
-                        removeOscillator(osc);
+                try {
+                    if (oscillator.length > 1) {
+                        for (var osc in oscillator) {
+                            removeOscillator(osc);
+                        }
                     }
+                } catch (err) {
+                    // console.log(err);
                 }
                 if (oscillator) {
                     removeOscillator(oscillator);
@@ -48,11 +52,21 @@ var App = (function() {
         }
     }
 
-    function createOscillator(waveType, frequency) {
+    function createOscillator(waveType, frequency, velocity) {
         var oscillator = audioCtx.createOscillator();
         oscillator.type = waveType;
         oscillator.frequency.value = frequency;
         oscillator.start();
+
+        var gainNode = audioCtx.createGain();
+        gainNode.gain.value = 1;
+
+        if (velocity) {
+            gainNode.gain.value = velocity / 100;
+        }
+
+        gainNode.connect(masterGainNode);
+        oscillator.gainNode = gainNode;
         oscillator.connect(gainNode);
         return oscillator;
     }
@@ -64,15 +78,15 @@ var App = (function() {
 
     function addOscillator(obj) {
         var waveType = getWaveType();
-        var oscillator = createOscillator(waveType, obj.frequency);
+        var oscillator = createOscillator(waveType, obj.frequency, obj.velocity);
         oscillators.push(oscillator);
     }
 
     function removeOscillator(oscillator) {
         try {
-            oscillator.disconnect(gainNode);
+            oscillator.disconnect(oscillator.gainNode);
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             return;
         }
         var index = oscillators.indexOf(oscillator);
@@ -201,7 +215,54 @@ var App = (function() {
     }
 
     function changeGainNodeVolume(input) {
-        gainNode.gain.value = input; // number between 0 and 1
+        masterGainNode.gain.value = input; // number between 0 and 1
+    }
+
+    var midi;
+
+    // midi functions
+    function onMIDISuccess(midiAccess) {
+        // when we get a succesful response, run this code
+        // console.log('MIDI Access Object', midiAccess);
+        alert('Midi device connected!');
+        requestMidiAccessBtn.disabled = true;
+        // when we get a succesful response, run this code
+        midi = midiAccess; // this is our raw MIDI data, inputs, outputs, and sysex status
+
+        var inputs = midi.inputs.values();
+        // loop over all available inputs and listen for any MIDI input
+        for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+            // each time there is a midi message call the onMIDIMessage function
+            input.value.onmidimessage = onMIDIMessage;
+        }
+    }
+
+    function onMIDIFailure(e) {
+        // when we get a failed response, run this code
+        alert("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
+    }
+
+    function getFrequencyFromMidiNoteNumber(note) {
+        return 440 * Math.pow(2, (note - 69) / 12);
+    }
+
+
+    function onMIDIMessage(message) {
+        var data = message.data; // this gives us our [command/channel, note, velocity] data.
+        // console.log('MIDI data', data); // MIDI data [144, 63, 73]
+        var note = data[1];
+        var velocity = data[2];
+        var frequency = parseInt(getFrequencyFromMidiNoteNumber(note));
+        if (velocity === 0) {
+            events.publish('stopSound', {
+                frequency: frequency
+            });
+        } else {
+            events.publish('playSound', {
+                frequency: frequency,
+                velocity: velocity
+            });
+        }
     }
 
     //end private
@@ -250,6 +311,19 @@ var App = (function() {
         waveTypeSelect.addEventListener('change', function(input) {
             updateOscillatorsWaveType(input.target.value);
         });
+
+        //request midi access
+        var requestMidiAccessBtn = document.getElementById('requestMidiAccessBtn');
+        requestMidiAccessBtn.addEventListener('click', function() {
+            // request MIDI access
+            if (navigator.requestMIDIAccess) {
+                navigator.requestMIDIAccess({
+                    sysex: false // this defaults to 'false' and we won't be covering sysex in this article. 
+                }).then(onMIDISuccess, onMIDIFailure);
+            } else {
+                alert("No MIDI support in your browser.");
+            }
+        })
     }
 
     return App;
