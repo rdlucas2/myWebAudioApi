@@ -5,9 +5,136 @@ var App = (function() {
 
     // create web audio api context
     var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+    var analyser = audioCtx.createAnalyser();
     var masterGainNode = audioCtx.createGain();
     masterGainNode.gain.value = 1;
-    masterGainNode.connect(audioCtx.destination);
+    analyser.fftSize = 2048;
+    masterGainNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    var bufferLength = analyser.frequencyBinCount;
+    var dataArray = new Uint8Array(bufferLength);
+    var WIDTH = 500;
+    var HEIGHT = 300;
+    var midi;
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext("2d");
+
+    var fpsDisplay = document.getElementById('fpsDisplay');
+    var lastFrameTimeMs = 0;
+    var maxFPS = 60;
+    var delta = 0;
+    var timestep = 1000 / 60;
+    var fps = 60;
+    var framesThisSecond = 0;
+    var lastFpsUpdate = 0;
+    var running = false;
+    var started = false;
+    var frameID = 0;
+
+    function update(delta) {
+        analyser.getByteTimeDomainData(dataArray);
+    }
+
+    function draw(interp) {
+        fpsDisplay.textContent = Math.round(fps) + ' FPS';
+        ctx.fillStyle = 'rgb(200, 200, 200)';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgb(0, 0, 0)';
+
+        ctx.beginPath();
+        var sliceWidth = WIDTH * 1.0 / bufferLength;
+        var x = 0;
+
+        for (var i = 0; i < bufferLength; i++) {
+
+            var v = dataArray[i] / 128.0;
+            var y = v * HEIGHT / 2;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+
+            x += sliceWidth;
+        };
+
+        ctx.lineTo(ctx.width, ctx.height / 2);
+        ctx.stroke();
+    }
+
+    function panic() {
+        delta = 0;
+    }
+
+    function begin() {}
+
+    function end(fps) {
+        if (fps < 25) {
+
+        } else if (fps > 30) {
+
+        }
+    }
+
+    function stop() {
+        running = false;
+        started = false;
+        cancelAnimationFrame(frameID);
+    }
+
+    function start() {
+        if (!started) {
+            started = true;
+            frameID = requestAnimationFrame(function(timestamp) {
+                draw(1);
+                running = true;
+                lastFrameTimeMs = timestamp;
+                lastFpsUpdate = timestamp;
+                framesThisSecond = 0;
+                frameID = requestAnimationFrame(mainLoop);
+            });
+        }
+    }
+
+    function mainLoop(timestamp) {
+        // Throttle the frame rate.    
+        if (timestamp < lastFrameTimeMs + (1000 / maxFPS)) {
+            frameID = requestAnimationFrame(mainLoop);
+            return;
+        }
+        delta += timestamp - lastFrameTimeMs;
+        lastFrameTimeMs = timestamp;
+
+        begin(timestamp, delta);
+
+        if (timestamp > lastFpsUpdate + 1000) {
+            fps = 0.25 * framesThisSecond + 0.75 * fps;
+
+            lastFpsUpdate = timestamp;
+            framesThisSecond = 0;
+        }
+        framesThisSecond++;
+
+        var numUpdateSteps = 0;
+        while (delta >= timestep) {
+            update(timestep);
+            delta -= timestep;
+            if (++numUpdateSteps >= 240) {
+                panic();
+                break;
+            }
+        }
+
+        draw(delta / timestep);
+
+        end(fps);
+
+        frameID = requestAnimationFrame(mainLoop);
+    }
+
     var oscillators = [];
 
     var pressedKeys = [];
@@ -16,6 +143,7 @@ var App = (function() {
             "Name": "playSound",
             "Subscription": events.subscribe('playSound', function(obj) {
                 addOscillator(obj);
+                // draw();
             })
         },
         {
@@ -37,6 +165,34 @@ var App = (function() {
             })
         }
     ];
+
+    function updateDistortionAmount(amount) {
+        for (var i = 0; i < oscillators.length; i++) {
+            var oscillator = oscillators[i];
+            oscillator.distortion.curve = makeDistortionCurve(amount);
+        }
+    }
+
+    function updateDistortionOversample(value) {
+        for (var i = 0; i < oscillators.length; i++) {
+            var oscillator = oscillators[i];
+            oscillator.distortion.oversample = value;
+        }
+    }
+
+    function makeDistortionCurve(amount) {
+        var k = typeof amount === 'number' ? amount : 50,
+            n_samples = 44100,
+            curve = new Float32Array(n_samples),
+            deg = Math.PI / 180,
+            i = 0,
+            x;
+        for (; i < n_samples; ++i) {
+            x = i * 2 / n_samples - 1;
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    };
 
     function updateOscillatorsWaveType(waveType) {
         for (var i = 0; i < oscillators.length; i++) {
@@ -65,8 +221,11 @@ var App = (function() {
             gainNode.gain.value = velocity / 100;
         }
 
-        gainNode.connect(masterGainNode);
+        var distortion = audioCtx.createWaveShaper();
+        distortion.connect(masterGainNode);
+        gainNode.connect(distortion);
         oscillator.gainNode = gainNode;
+        oscillator.distortion = distortion;
         oscillator.connect(gainNode);
         return oscillator;
     }
@@ -218,14 +377,12 @@ var App = (function() {
         masterGainNode.gain.value = input; // number between 0 and 1
     }
 
-    var midi;
-
     // midi functions
     function onMIDISuccess(midiAccess) {
         // when we get a succesful response, run this code
         // console.log('MIDI Access Object', midiAccess);
         alert('Midi device connected!');
-        requestMidiAccessBtn.disabled = true;
+        requestMidiAccessBtn.remove();
         // when we get a succesful response, run this code
         midi = midiAccess; // this is our raw MIDI data, inputs, outputs, and sysex status
 
@@ -246,13 +403,12 @@ var App = (function() {
         return 440 * Math.pow(2, (note - 69) / 12);
     }
 
-
     function onMIDIMessage(message) {
         var data = message.data; // this gives us our [command/channel, note, velocity] data.
         // console.log('MIDI data', data); // MIDI data [144, 63, 73]
         var note = data[1];
         var velocity = data[2];
-        var frequency = parseInt(getFrequencyFromMidiNoteNumber(note));
+        var frequency = Math.round(getFrequencyFromMidiNoteNumber(note));
         if (velocity === 0) {
             events.publish('stopSound', {
                 frequency: frequency
@@ -269,6 +425,8 @@ var App = (function() {
 
     //public
     App.prototype.init = function() {
+        start();
+
         //listen for keyboard events
         document.addEventListener("keydown", function(event) {
             var keyExists = pressedKeys.indexOf(event.key) > -1;
@@ -307,10 +465,21 @@ var App = (function() {
             detuneOscillators(input.target.value);
         });
 
+        var distortionSlider = document.getElementById('distortionAmount');
+        distortionSlider.addEventListener('input', function(input) {
+            updateDistortionAmount(input.target.value);
+        });
+
+        var distortionSelect = document.getElementById('distortionOversample');
+        distortionSelect.addEventListener('change', function(input) {
+            updateDistortionOversample(input.target.value);
+        });
+
         var waveTypeSelect = document.getElementById('waveType');
         waveTypeSelect.addEventListener('change', function(input) {
             updateOscillatorsWaveType(input.target.value);
         });
+
 
         //request midi access
         var requestMidiAccessBtn = document.getElementById('requestMidiAccessBtn');
@@ -323,7 +492,7 @@ var App = (function() {
             } else {
                 alert("No MIDI support in your browser.");
             }
-        })
+        });
     }
 
     return App;

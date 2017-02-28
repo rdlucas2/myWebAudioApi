@@ -60,18 +60,27 @@
         <h4>Live Keyboard Controls</h4>
         <label>Volume: <input type="range" id="volume" value="50" step="1" /></label>
         <label>Detune: <input type="range" id="detune" value="0" min="-50" max="50" step="1" /></label>
+        <label>Distortion Amount: <input type="range" id="distortionAmount" value="0" min="-1000" max="1000" step="100" /></label>
+        <select id="distortionOversample">
+            <option value="none">None</option>
+            <option value="2x">2x</option>
+            <option value="4x">4x</option>
+        </select>
         <select id="waveType">
             <option value="square">Square</option>
             <option value="sine">Sine</option>
             <option value="sawtooth">Sawtooth</option>
             <option value="triangle">Triangle</option>
         </select>
+        <button type="button" id="requestMidiAccessBtn">Request Midi Access</button>
     </div>
 
     <hr />
 
-    <h4>Midi Controller</h4>
-    <button type="button" id="requestMidiAccessBtn">Request Midi Access</button>
+
+    <h4>Analyzer</h4>
+    <canvas id="canvas" width="500" height="300" style="display: block;"></canvas>
+    <div id="fpsDisplay"></div>
 
     <script src="src/events.js"></script>
     <script src="src/app.js"></script>
