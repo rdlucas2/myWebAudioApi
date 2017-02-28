@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Web Audio Api Test</title>
+    <link rel="shortcut icon" type="image/png" href="">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="keyboard">
+        <div class="section" id="section1">
+            <div class="c key white">c</div>
+            <div class="cd key black">cd</div>
+            <div class="d key white">d</div>
+            <div class="de key black">de</div>
+            <div class="e key white">e</div>
+            <div class="f key white">f</div>
+            <div class="fg key black">fg</div>
+            <div class="g key white">g</div>
+            <div class="ga key black">ga</div>
+            <div class="a key white">a</div>
+            <div class="ab key black">ab</div>
+            <div class="b key white">b</div>
+        </div>
+        <div class="section" id="section2">
+            <div class="c key white">c</div>
+            <div class="cd key black">cd</div>
+            <div class="d key white">d</div>
+            <div class="de key black">de</div>
+            <div class="e key white">e</div>
+            <div class="f key white">f</div>
+            <div class="fg key black">fg</div>
+            <div class="g key white">g</div>
+            <div class="ga key black">ga</div>
+            <div class="a key white">a</div>
+            <div class="ab key black">ab</div>
+            <div class="b key white">b</div>
+        </div>
+        <div class="section" id="section3">
+            <div class="c key white">c</div>
+            <!--<div class="cd key black">cd</div>
+            <div class="d key white">d</div>
+            <div class="de key black">de</div>
+            <div class="e key white">e</div>
+            <div class="f key white">f</div>
+            <div class="fg key black">fg</div>
+            <div class="g key white">g</div>
+            <div class="ga key black">ga</div>
+            <div class="a key white">a</div>
+            <div class="ab key black">ab</div>
+            <div class="b key white">b</div>-->
+        </div>
+    </div>
+
+
+    <div style="clear:both;">
+        <hr />
+        <h4>Live Keyboard Controls</h4>
+        <label>Volume: <input type="range" id="volume" value="50" step="1" /></label>
+        <label>Detune: <input type="range" id="detune" value="0" min="-50" max="50" step="1" /></label>
+        <select id="waveType">
+            <option value="square">Square</option>
+            <option value="sine">Sine</option>
+            <option value="sawtooth">Sawtooth</option>
+            <option value="triangle">Triangle</option>
+        </select>
+    </div>
+
+    <hr />
+
+    <script src="src/events.js"></script>
+    <script src="src/app.js"></script>
+</body>
+
+</html>
