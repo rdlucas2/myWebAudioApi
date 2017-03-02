@@ -21,6 +21,7 @@
 
     <img src="Capture.JPG">
 
+    <script src="lib/web-audio-scheduler/worker-timer.js"></script>
     <script src="lib/web-audio-scheduler/web-audio-scheduler.js"></script>
     <script>
         var tempo = 160; // BPM (beats per minute)
@@ -50,7 +51,8 @@
         //example from https://github.com/mohayonao/web-audio-scheduler
         var audioContext = new AudioContext();
         var sched1 = new WebAudioScheduler({
-            context: audioContext
+            context: audioContext,
+            timerAPI: WorkerTimer
         });
         var sched2 = new WebAudioScheduler({
             context: audioContext
@@ -702,12 +704,12 @@
                 }],
                 [{
                     frequency: translateFrequency('a4'),
-                    duration: translateDuration('e'),
+                    duration: translateDuration('q'),
                     gain: defaultVolume,
                     waveType: waveType
                 }, {
                     frequency: translateFrequency('f3'),
-                    duration: translateDuration('e'),
+                    duration: translateDuration('q'),
                     gain: defaultVolume,
                     waveType: waveType
                 }],
