@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Web Audio Api Test</title>
+    <link rel="shortcut icon" type="image/png" href="">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <button id="metronomeBtn">Start Metronome</button>
+
+    <button id="mySongBtn">Start Song 1</button>
+
+    <button id="myLongSongBtn">Start Song 2</button>
+
+    <script src="lib/web-audio-scheduler/web-audio-scheduler.js"></script>
+    <script>
+        //example from https://github.com/mohayonao/web-audio-scheduler
+        var audioContext = new AudioContext();
+        var sched1 = new WebAudioScheduler({
+            context: audioContext
+        });
+        var sched2 = new WebAudioScheduler({
+            context: audioContext
+        });
+        var sched3 = new WebAudioScheduler({
+            context: audioContext
+        });
+        var masterGain = null;
+
+        function metronome(e) {
+            var t0 = e.playbackTime;
+
+            sched1.insert(t0 + 0.000, ticktack, {
+                frequency: 880,
+                duration: 1.0
+            });
+            sched1.insert(t0 + 0.500, ticktack, {
+                frequency: 440,
+                duration: 0.2
+            });
+            sched1.insert(t0 + 1.000, ticktack, {
+                frequency: 440,
+                duration: 0.2
+            });
+            sched1.insert(t0 + 1.500, ticktack, {
+                frequency: 440,
+                duration: 0.2
+            });
+            sched1.insert(t0 + 2.000, metronome);
+        }
+
+        function ticktack(e) {
+            var t0 = e.playbackTime;
+            var t1 = t0 + e.args.duration;
+            var osc = audioContext.createOscillator();
+            var amp = audioContext.createGain();
+
+            osc.frequency.value = e.args.frequency;
+            osc.start(t0);
+            osc.stop(t1);
+            osc.connect(amp);
+
+            amp.gain.setValueAtTime(0.5, t0);
+            amp.gain.exponentialRampToValueAtTime(1e-6, t1);
+            amp.connect(masterGain);
+
+            sched1.nextTick(t1, function() {
+                osc.disconnect();
+                amp.disconnect();
+            });
+        }
+        masterGain = audioContext.createGain();
+        masterGain.connect(audioContext.destination);
+
+        // sched.on("start", function() {
+        //     masterGain = audioContext.createGain();
+        //     masterGain.connect(audioContext.destination);
+        // });
+
+        // sched.on("stop", function() {
+        //     masterGain.disconnect();
+        //     masterGain = null;
+        // });
+
+        function start() {
+            sched1.start(metronome);
+        }
+
+        function stop() {
+            sched1.stop(true);
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                sched1.aheadTime = 0.1;
+                sched2.aheadTime = 0.1;
+                sched3.aheadTime = 0.1;
+            } else {
+                sched1.aheadTime = 1.0;
+                sched1.process();
+                sched2.aheadTime = 1.0;
+                sched2.process();
+                sched3.aheadTime = 1.0;
+                sched3.process();
+            }
+        });
+
+        var metronomeBtn = document.getElementById('metronomeBtn');
+        var metronomeBtnActive = false;
+        metronomeBtn.addEventListener('click', function() {
+            if (metronomeBtnActive) {
+                metronomeBtnActive = !metronomeBtnActive;
+                metronomeBtn.innerText = "Start Metronome";
+                stop();
+            } else {
+                metronomeBtnActive = !metronomeBtnActive;
+                metronomeBtn.innerText = "Stop Metronome";
+                start();
+            }
+        });
+
+
+        //my examples
+
+        //hot cross buns
+
+        function note2(e) {
+            var t0 = e.playbackTime;
+            var t1 = t0 + e.args.duration;
+            var osc = audioContext.createOscillator();
+            var amp = audioContext.createGain();
+
+            osc.frequency.value = e.args.frequency;
+            osc.type = e.args.waveType;
+            osc.start(t0);
+            osc.stop(t1);
+            osc.connect(amp);
+
+            amp.gain.setValueAtTime(e.args.gain, t0);
+            amp.gain.exponentialRampToValueAtTime(1e-6, t1);
+            amp.connect(masterGain);
+
+            sched2.nextTick(t1, function() {
+                osc.disconnect();
+                amp.disconnect();
+            });
+        }
+
+        function song(e) {
+            var t0 = e.playbackTime;
+
+            sched2.insert(t0 + 0.000, note2, {
+                frequency: 494,
+                duration: 1.0,
+                gain: 0.5,
+                waveType: 'sawtooth'
+            });
+            sched2.insert(t0 + 0.500, note2, {
+                frequency: 440,
+                duration: 1.0,
+                gain: 0.5,
+                waveType: 'sawtooth'
+            });
+            sched2.insert(t0 + 1.000, note2, {
+                frequency: 392,
+                duration: 2.0,
+                gain: 0.5,
+                waveType: 'sawtooth'
+            });
+            // sched2.insert(t0 + 1.500, note, {
+            //     frequency: 440,
+            //     duration: 0.2,
+            //     gain: 0.5,
+            //     waveType: 'square'
+            // });
+            sched2.insert(t0 + 2.000, song);
+        }
+
+        function startSong1() {
+            sched2.start(song);
+        }
+
+        function stopSong1() {
+            sched2.stop(true);
+        }
+
+        var mySongBtn = document.getElementById('mySongBtn');
+        var mySongBtnActive = false;
+        mySongBtn.addEventListener('click', function() {
+            if (mySongBtnActive) {
+                mySongBtnActive = !mySongBtnActive;
+                mySongBtn.innerText = "Start Song 1";
+                stopSong1();
+            } else {
+                mySongBtnActive = !mySongBtnActive;
+                mySongBtn.innerText = "Stop Song 1";
+                startSong1();
+            }
+        });
+
+        //mario example
+        function note3(e) {
+            if (Object.prototype.toString.call(e.args) === '[object Array]') {
+                for (var i = 0; i < e.args.length; i++) {
+                    var t0 = e.playbackTime;
+                    var t1 = t0 + e.args[i].duration;
+                    var osc = audioContext.createOscillator();
+                    var amp = audioContext.createGain();
+
+                    osc.frequency.value = e.args[i].frequency;
+                    osc.type = e.args[i].waveType;
+                    osc.start(t0);
+                    osc.stop(t1);
+                    osc.connect(amp);
+
+                    amp.gain.setValueAtTime(e.args[i].gain, t0);
+                    amp.gain.exponentialRampToValueAtTime(1e-3, t1); //attack / decay
+                    amp.connect(masterGain);
+
+                    sched2.nextTick(t1, function() {
+                        osc.disconnect();
+                        amp.disconnect();
+                    });
+                }
+            } else {
+                var t0 = e.playbackTime;
+                var t1 = t0 + e.args.duration;
+                var osc = audioContext.createOscillator();
+                var amp = audioContext.createGain();
+
+                osc.frequency.value = e.args.frequency;
+                osc.type = e.args.waveType;
+                osc.start(t0);
+                osc.stop(t1);
+                osc.connect(amp);
+
+                amp.gain.setValueAtTime(e.args.gain, t0);
+                amp.gain.exponentialRampToValueAtTime(1e-3, t1); //attack / decay
+                amp.connect(masterGain);
+
+                sched2.nextTick(t1, function() {
+                    osc.disconnect();
+                    amp.disconnect();
+                });
+            }
+        }
+
+        var tempo = 160; // BPM (beats per minute)
+        var quarterNoteTime = 60 / tempo;
+
+        function translateFrequency(noteName) {
+            switch (noteName) {
+                case 'r':
+                    return 0;
+                    break;
+                case 'a3':
+                    return 220 / 2;
+                    break;
+                case 'ab3':
+                    return 233 / 2;
+                    break;
+                case 'b3':
+                    return 247 / 2;
+                    break;
+                case 'c3':
+                    return 131;
+                    break;
+                case 'cd3':
+                    return 139;
+                    break;
+                case 'd3':
+                    return 147;
+                    break;
+                case 'de3':
+                    return 156;
+                    break;
+                case 'e3':
+                    return 165;
+                    break;
+                case 'f3':
+                    return 175;
+                    break;
+                case 'fg3':
+                    return 185;
+                    break;
+                case 'g3':
+                    return 196;
+                    break;
+                case 'ga3':
+                    return 208;
+                    break;
+                case 'a4':
+                    return 220;
+                    break;
+                case 'ab4':
+                    return 233;
+                    break;
+                case 'b4':
+                    return 247;
+                    break;
+                case 'c4': //middle c
+                    return 262;
+                    break;
+                case 'cd4':
+                    return 139 * 2;
+                    break;
+                case 'd4':
+                    return 147 * 2;
+                    break;
+                case 'de4':
+                    return 156 * 2;
+                    break;
+                case 'e4':
+                    return 165 * 2;
+                    break;
+                case 'f4':
+                    return 175 * 2;
+                    break;
+                case 'fg4':
+                    return 185 * 2;
+                    break;
+                case 'g4':
+                    return 196 * 2;
+                    break;
+                case 'ga4':
+                    return 208 * 2;
+                    break;
+                case 'a5':
+                    return 440;
+                    break;
+                case 'ab5':
+                    return 233;
+                    break;
+                case 'b5':
+                    return 247;
+                    break;
+                case 'c5': //c above middle c
+                    return 262 * 2;
+                    break;
+                case 'cd5':
+                    return 139 * 4;
+                    break;
+                case 'd5':
+                    return 147 * 4;
+                    break;
+                case 'de5':
+                    return 156 * 4;
+                    break;
+                case 'e5':
+                    return 165 * 4;
+                    break;
+                case 'f5':
+                    return 175 * 4;
+                    break;
+                case 'fg5':
+                    return 185 * 4;
+                    break;
+                case 'g5':
+                    return 196 * 4;
+                    break;
+                case 'ga5':
+                    return 208 * 4;
+                    break;
+                case 'a6':
+                    return 440 * 2;
+                    break;
+            }
+        }
+
+        function translateDuration(stringDuration) {
+            switch (stringDuration) {
+                case 'w': //whole 
+                    return quarterNoteTime * 4;
+                    break;
+                case 'th': //t stands for triplet
+                    return (quarterNoteTime * 4) / 3;
+                    break;
+                case 'dh': //d stands for dotted
+                    return (quarterNoteTime * 2) + (quarterNoteTime);
+                    break;
+                case 'h': //half
+                    return quarterNoteTime * 2;
+                    break;
+                case 'tq':
+                    return (quarterNoteTime * 2) / 3;
+                    break;
+                case 'dq':
+                    return quarterNoteTime + (quarterNoteTime / 2);
+                    break;
+                case 'q': //quarter
+                    return quarterNoteTime;
+                    break;
+                case 'de':
+                    return (quarterNoteTime / 2) + (quarterNoteTime / 4);
+                    break;
+                case 'e': //eigth
+                    return quarterNoteTime / 2;
+                    break;
+                case 'te':
+                    return quarterNoteTime / 3;
+                    break;
+                case 'ds':
+                    return (quarterNoteTime / 4) + (quarterNoteTime / 8);
+                    break;
+                case 's': //sixteenth
+                    return quarterNoteTime / 4;
+                    break;
+            }
+        }
+
+        var waveType = 'square';
+        var defaultVolume = 0.5;
+        var notes = [
+            //bar 1 http://www.musicnotes.com/sheetmusic/mtd.asp?ppn=MN0109432
+            [{
+                frequency: translateFrequency('e5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('e5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('e5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('c5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('e5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            //bar 2
+            [{
+                frequency: translateFrequency('g5'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('b3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('g4'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            //bar 3
+            [{
+                frequency: translateFrequency('c4'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+
+            }, {
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('c3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            //bar 4
+            {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('a4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('f3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('b4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('ab4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('fg3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('a4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('f3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            //bar 5
+            [{
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('e4'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('c3'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('g4'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('tq'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('a5'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('f3'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('f4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('d3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('g4'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('e3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            //bar 6
+            {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('e5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('a3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            },
+            [{
+                frequency: translateFrequency('c5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('f3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('d5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('b3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }],
+            [{
+                frequency: translateFrequency('b5'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }, {
+                frequency: translateFrequency('g3'),
+                duration: translateDuration('e'),
+                gain: defaultVolume,
+                waveType: waveType
+            }], {
+                frequency: translateFrequency('r'),
+                duration: translateDuration('q'),
+                gain: defaultVolume,
+                waveType: waveType
+            }
+            //bar 7
+
+            //bar 8
+
+            //bar 9
+
+            //bar 10
+
+            //bar 11
+
+            //bar 12
+
+            //bar 13
+
+            //bar 14
+        ];
+
+        function song2(e) {
+            var t0 = e.playbackTime;
+
+            var totalTimePassed = 0.000;
+            for (var i = 0; i < notes.length; i++) {
+                console.log(totalTimePassed);
+                sched3.insert(t0 + totalTimePassed, note3, notes[i]);
+                if (Object.prototype.toString.call(notes[i]) === '[object Array]') {
+                    totalTimePassed += Math.max.apply(Math, notes[i].map(function(a) {
+                        return a.duration;
+                    }));
+                } else {
+                    totalTimePassed += notes[i].duration;
+                }
+            }
+
+            sched3.insert(t0 + totalTimePassed, song2, {
+                notes: notes
+            });
+        }
+
+        function startSong2() {
+            sched3.start(song2, {
+                notes: notes
+            });
+        }
+
+        function stopSong2() {
+            sched3.stop(true);
+        }
+
+        var myLongSongBtn = document.getElementById('myLongSongBtn');
+        var myLongSongBtnctive = false;
+        myLongSongBtn.addEventListener('click', function() {
+            if (myLongSongBtnctive) {
+                myLongSongBtnctive = !myLongSongBtnctive;
+                myLongSongBtn.innerText = "Start Song 2";
+                stopSong2();
+            } else {
+                myLongSongBtnctive = !myLongSongBtnctive;
+                myLongSongBtn.innerText = "Stop Song 2";
+                startSong2();
+            }
+        });
+    </script>
+</body>
+
+</html>

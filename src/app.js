@@ -142,13 +142,14 @@ var App = (function() {
     var subscriptions = [{
             "Name": "playSound",
             "Subscription": events.subscribe('playSound', function(obj) {
+                // console.log(obj);
                 addOscillator(obj);
-                // draw();
             })
         },
         {
             "Name": "stopSound",
             "Subscription": events.subscribe('stopSound', function(obj) {
+                // console.log(obj);
                 var oscillator = oscillators.find(function(item) { return item.frequency.value === obj.frequency });
                 try {
                     if (oscillator.length > 1) {
@@ -209,6 +210,7 @@ var App = (function() {
     }
 
     function createOscillator(waveType, frequency, velocity) {
+        // console.log(waveType, frequency, velocity);
         var oscillator = audioCtx.createOscillator();
         oscillator.type = waveType;
         oscillator.frequency.value = frequency;
@@ -406,9 +408,13 @@ var App = (function() {
     function onMIDIMessage(message) {
         var data = message.data; // this gives us our [command/channel, note, velocity] data.
         // console.log('MIDI data', data); // MIDI data [144, 63, 73]
+        var type = data[0]; //ewi has types (176 seems to be sustain?)
         var note = data[1];
         var velocity = data[2];
         var frequency = Math.round(getFrequencyFromMidiNoteNumber(note));
+        if (type === 176) {
+            return;
+        }
         if (velocity === 0) {
             events.publish('stopSound', {
                 frequency: frequency
@@ -457,16 +463,22 @@ var App = (function() {
         //keyboard controls
         var volumeSlider = document.getElementById('volume');
         volumeSlider.addEventListener('input', function(input) {
+            var volumeDisplay = document.getElementById('volumeDisplay');
+            volumeDisplay.innerText = input.target.value;
             changeGainNodeVolume(input.target.value / 100);
         });
 
         var detuneSlider = document.getElementById('detune');
         detuneSlider.addEventListener('input', function(input) {
+            var detuneDisplay = document.getElementById('detuneDisplay');
+            detuneDisplay.innerText = input.target.value;
             detuneOscillators(input.target.value);
         });
 
         var distortionSlider = document.getElementById('distortionAmount');
         distortionSlider.addEventListener('input', function(input) {
+            var distortionDisplay = document.getElementById('distortionDisplay');
+            distortionDisplay.innerText = input.target.value;
             updateDistortionAmount(input.target.value);
         });
 

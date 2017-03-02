@@ -58,9 +58,9 @@
     <div style="clear:both;">
         <hr />
         <h4>Live Keyboard Controls</h4>
-        <label>Volume: <input type="range" id="volume" value="50" step="1" /></label>
-        <label>Detune: <input type="range" id="detune" value="0" min="-50" max="50" step="1" /></label>
-        <label>Distortion Amount: <input type="range" id="distortionAmount" value="0" min="-1000" max="1000" step="100" /></label>
+        <label>Volume: <span id="volumeDisplay">50</span><input type="range" id="volume" value="50" step="1" /></label>
+        <label>Detune: <span id="detuneDisplay">0</span><input type="range" id="detune" value="0" min="-50" max="50" step="1" /></label>
+        <label>Distortion Amount: <span id="distortionDisplay">0</span><input type="range" id="distortionAmount" value="0" min="-20000" max="20000" step="100" /></label>
         <select id="distortionOversample">
             <option value="none">None</option>
             <option value="2x">2x</option>
