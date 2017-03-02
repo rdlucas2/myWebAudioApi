@@ -16,10 +16,37 @@
 
     <button id="myLongSongBtn">Start Song 2</button>
 
+    <label>Volume: <span id="volumeDisplay">50</span><input type="range" id="volume" value="50" step="1" /></label>
+    <label>Tempo: <span id="tempoDisplay">160</span><input type="range" id="tempo" value="160" min="40" max="220" step="1" /></label>
+
     <img src="Capture.JPG">
 
     <script src="lib/web-audio-scheduler/web-audio-scheduler.js"></script>
     <script>
+        var tempo = 160; // BPM (beats per minute)
+        var quarterNoteTime = 60 / tempo;
+        var waveType = 'square';
+        var defaultVolume = 0.5;
+
+        var volumeSlider = document.getElementById('volume');
+        volumeSlider.addEventListener('input', function(input) {
+            var volumeDisplay = document.getElementById('volumeDisplay');
+            volumeDisplay.innerText = input.target.value;
+            changeGainNodeVolume(input.target.value / 100);
+        });
+
+        var tempoSlider = document.getElementById('tempo');
+        tempoSlider.addEventListener('input', function(input) {
+            var tempoDisplay = document.getElementById('tempoDisplay');
+            tempoDisplay.innerText = input.target.value;
+            tempo = input.target.value;
+            quarterNoteTime = 60 / tempo
+        });
+
+        function changeGainNodeVolume(input) {
+            masterGain.gain.value = input; // number between 0 and 1
+        }
+
         //example from https://github.com/mohayonao/web-audio-scheduler
         var audioContext = new AudioContext();
         var sched1 = new WebAudioScheduler({
@@ -76,6 +103,7 @@
             });
         }
         masterGain = audioContext.createGain();
+        masterGain.gain.value = 0.5;
         masterGain.connect(audioContext.destination);
 
         // sched.on("start", function() {
@@ -251,9 +279,6 @@
             }
         }
 
-        var tempo = 160; // BPM (beats per minute)
-        var quarterNoteTime = 60 / tempo;
-
         function translateFrequency(noteName) {
             switch (noteName) {
                 case 'r':
@@ -374,6 +399,8 @@
         }
 
         function translateDuration(stringDuration) {
+            // console.log(tempo);
+            // console.log(quarterNoteTime);
             switch (stringDuration) {
                 case 'w': //whole 
                     return quarterNoteTime * 4;
@@ -414,444 +441,446 @@
             }
         }
 
-        var waveType = 'square';
-        var defaultVolume = 0.5;
-        var notes = [
-            //bar 1 http://www.musicnotes.com/sheetmusic/mtd.asp?ppn=MN0109432
-            [{
-                frequency: translateFrequency('e5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('e5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('e5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('c5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('e5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            //bar 2
-            [{
-                frequency: translateFrequency('g5'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('b3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('g4'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            //bar 3
-            [{
-                frequency: translateFrequency('c4'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
+        function buildMario() {
+            return [
+                //bar 1 http://www.musicnotes.com/sheetmusic/mtd.asp?ppn=MN0109432
+                [{
+                    frequency: translateFrequency('e5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('e5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('e5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('c5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('e5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                //bar 2
+                [{
+                    frequency: translateFrequency('g5'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('b3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('g4'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                //bar 3
+                [{
+                    frequency: translateFrequency('c4'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
 
-            }, {
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
+                }, {
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
 
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('c3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            //bar 4
-            {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('a4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('f3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('b4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('ab4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('fg3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('a4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('f3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            //bar 5
-            [{
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('e4'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('c3'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('g4'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('tq'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('a5'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('f3'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('f4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('d3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('g4'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('e3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            //bar 6
-            {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('e5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('a3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            },
-            [{
-                frequency: translateFrequency('c5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('f3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('d5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('b3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }],
-            [{
-                frequency: translateFrequency('b5'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }, {
-                frequency: translateFrequency('g3'),
-                duration: translateDuration('e'),
-                gain: defaultVolume,
-                waveType: waveType
-            }], {
-                frequency: translateFrequency('r'),
-                duration: translateDuration('q'),
-                gain: defaultVolume,
-                waveType: waveType
-            }
-            //bar 7
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('c3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                //bar 4
+                {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('a4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('f3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('b4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('ab4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('fg3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('a4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('f3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                //bar 5
+                [{
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('e4'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('c3'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('g4'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('tq'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('a5'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('f3'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('f4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('d3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('g4'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('e3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                //bar 6
+                {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('e5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('a3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                },
+                [{
+                    frequency: translateFrequency('c5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('f3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('d5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('b3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }],
+                [{
+                    frequency: translateFrequency('b5'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }, {
+                    frequency: translateFrequency('g3'),
+                    duration: translateDuration('e'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }], {
+                    frequency: translateFrequency('r'),
+                    duration: translateDuration('q'),
+                    gain: defaultVolume,
+                    waveType: waveType
+                }
+                //bar 7
 
-            //bar 8
+                //bar 8
 
-            //bar 9
+                //bar 9
 
-            //bar 10
+                //bar 10
 
-            //bar 11
+                //bar 11
 
-            //bar 12
+                //bar 12
 
-            //bar 13
+                //bar 13
 
-            //bar 14
-        ];
+                //bar 14
+            ];
+
+        }
 
         function song2(e) {
             var t0 = e.playbackTime;
 
             var totalTimePassed = 0.000;
-            for (var i = 0; i < notes.length; i++) {
-                console.log(totalTimePassed);
-                sched3.insert(t0 + totalTimePassed, note3, notes[i]);
-                if (Object.prototype.toString.call(notes[i]) === '[object Array]') {
-                    totalTimePassed += Math.max.apply(Math, notes[i].map(function(a) {
+            for (var i = 0; i < e.args.notes.length; i++) {
+                // console.log(totalTimePassed);
+                sched3.insert(t0 + totalTimePassed, note3, e.args.notes[i]);
+                if (Object.prototype.toString.call(e.args.notes[i]) === '[object Array]') {
+                    totalTimePassed += Math.max.apply(Math, e.args.notes[i].map(function(a) {
                         return a.duration;
                     }));
                 } else {
-                    totalTimePassed += notes[i].duration;
+                    totalTimePassed += e.args.notes[i].duration;
                 }
             }
 
             sched3.insert(t0 + totalTimePassed, song2, {
-                notes: notes
+                notes: e.args.notes
             });
         }
 
         function startSong2() {
+            var notes = buildMario();
             sched3.start(song2, {
                 notes: notes
             });
