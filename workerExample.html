@@ -43,6 +43,7 @@
             tempoDisplay.innerText = input.target.value;
             tempo = input.target.value;
             quarterNoteTime = 60 / tempo
+            notes = buildMario();
         });
 
         function changeGainNodeVolume(input) {
@@ -865,25 +866,28 @@
             var t0 = e.playbackTime;
 
             var totalTimePassed = 0.000;
-            for (var i = 0; i < e.args.notes.length; i++) {
+            for (var i = 0; i < notes.length; i++) {
                 // console.log(totalTimePassed);
-                sched3.insert(t0 + totalTimePassed, note3, e.args.notes[i]);
-                if (Object.prototype.toString.call(e.args.notes[i]) === '[object Array]') {
-                    totalTimePassed += Math.max.apply(Math, e.args.notes[i].map(function(a) {
+                sched3.insert(t0 + totalTimePassed, note3, notes[i]);
+                if (Object.prototype.toString.call(notes[i]) === '[object Array]') {
+                    totalTimePassed += Math.max.apply(Math, notes[i].map(function(a) {
                         return a.duration;
                     }));
                 } else {
-                    totalTimePassed += e.args.notes[i].duration;
+                    totalTimePassed += notes[i].duration;
                 }
             }
 
+            notes = buildMario();
             sched3.insert(t0 + totalTimePassed, song2, {
-                notes: e.args.notes
+                notes: notes
             });
         }
 
+        var notes;
+
         function startSong2() {
-            var notes = buildMario();
+            notes = buildMario();
             sched3.start(song2, {
                 notes: notes
             });
